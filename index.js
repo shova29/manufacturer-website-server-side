@@ -25,6 +25,9 @@ async function run() {
     const userCollection = client
       .db("bicycle-manufacturer")
       .collection("users");
+    const partCollection = client
+      .db("bicycle-manufacturer")
+      .collection("parts");
 
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -41,6 +44,13 @@ async function run() {
         { expiresIn: "1day" }
       );
       res.send({ result, token });
+    });
+
+    app.get("/part", async (req, res) => {
+      const query = {};
+      const cursor = partCollection.find(query).sort({ _id: -1 }).limit(6);
+      const parts = await cursor.toArray();
+      res.send(parts);
     });
   } finally {
   }
