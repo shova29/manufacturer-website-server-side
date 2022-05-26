@@ -28,6 +28,9 @@ async function run() {
     const partCollection = client
       .db("bicycle-manufacturer")
       .collection("parts");
+    const purchaseCollection = client
+      .db("bicycle-manufacturer")
+      .collection("purchases");
 
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -60,6 +63,13 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const part = await partCollection.findOne(query);
       res.send(part);
+    });
+
+    // Purchase API
+    app.post("/purchase", async (req, res) => {
+      const purchase = req.body;
+      const result = await purchaseCollection.insertOne(purchase);
+      res.send(result);
     });
   } finally {
   }
