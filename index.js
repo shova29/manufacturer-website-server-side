@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
 const app = express();
@@ -46,11 +46,20 @@ async function run() {
       res.send({ result, token });
     });
 
+    // Part API
     app.get("/part", async (req, res) => {
       const query = {};
       const cursor = partCollection.find(query).sort({ _id: -1 }).limit(6);
       const parts = await cursor.toArray();
       res.send(parts);
+    });
+
+    // Part Details API
+    app.get("/part/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const part = await partCollection.findOne(query);
+      res.send(part);
     });
   } finally {
   }
