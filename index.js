@@ -47,6 +47,19 @@ async function run() {
       .db("bicycle-manufacturer")
       .collection("purchases");
 
+    //VerifyAdmin Bearer Api
+    const verifyAdmin = async (req, res, next) => {
+      const requester = req.decoded.email;
+      const requesterAccount = await userCollection.findOne({
+        email: requester,
+      });
+      if (requesterAccount.role === "admin") {
+        next();
+      } else {
+        res.status(403).send({ message: "Forbidden Access" });
+      }
+    };
+
     //User Get Api
     app.get("/user", verifyJWT, async (req, res) => {
       const users = await userCollection.find().toArray();
@@ -79,7 +92,7 @@ async function run() {
     });
 
     //Admin Put Api
-    app.put("/user/admin/:email", verifyJWT, async (req, res) => {
+    app.put("/user/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
       const updateDoc = {
@@ -92,8 +105,12 @@ async function run() {
     // Part API
     app.get("/part", async (req, res) => {
       const query = {};
-      const cursor = partCollection.find(query).sort({ _id: -1 }).limit(6);
-      const parts = await cursor.toArray();
+      // const cursor = partCollection.find(query).sort({ _id: -1 }).limit(6);
+      const parts = await partCollection
+        .find(query)
+        .toArray()
+        .sort({ _id: -1 })
+        .limit(6);
       res.send(parts);
     });
 
