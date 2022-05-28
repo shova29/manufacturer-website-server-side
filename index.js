@@ -111,13 +111,6 @@ async function run() {
       res.send(parts);
     });
 
-    // Part Post API
-    app.post("/part", async (req, res) => {
-      const part = req.body;
-      const result = await partCollection.insertOne(part);
-      res.send(result);
-    });
-
     // Part Details API
     app.get("/part/:id", async (req, res) => {
       const id = req.params.id;
@@ -126,8 +119,29 @@ async function run() {
       res.send(part);
     });
 
+    //
+    app.get("/products", verifyJWT, verifyAdmin, async (req, res) => {
+      const query = {};
+      const products = await partCollection.find(query).toArray();
+      res.send(products);
+    });
+
+    // Part Post API
+    app.post("/part", verifyJWT, verifyAdmin, async (req, res) => {
+      const part = req.body;
+      const result = await partCollection.insertOne(part);
+      res.send(result);
+    });
+
+    app.delete("/products/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await partCollection.deleteOne(filter);
+      res.send(result);
+    });
+
     // Purchase API
-    app.post("/purchase", async (req, res) => {
+    app.post("/purchase", verifyJWT, async (req, res) => {
       const purchase = req.body;
       const result = await purchaseCollection.insertOne(purchase);
       res.send(result);
