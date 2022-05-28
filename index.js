@@ -119,13 +119,6 @@ async function run() {
       res.send(part);
     });
 
-    //
-    app.get("/products", verifyJWT, verifyAdmin, async (req, res) => {
-      const query = {};
-      const products = await partCollection.find(query).toArray();
-      res.send(products);
-    });
-
     // Part Post API
     app.post("/part", verifyJWT, verifyAdmin, async (req, res) => {
       const part = req.body;
@@ -133,6 +126,14 @@ async function run() {
       res.send(result);
     });
 
+    //Products Get Api for Manage Products
+    app.get("/products", verifyJWT, verifyAdmin, async (req, res) => {
+      const query = {};
+      const products = await partCollection.find(query).toArray();
+      res.send(products);
+    });
+
+    //Products Delete Api for Manage Products
     app.delete("/products/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
