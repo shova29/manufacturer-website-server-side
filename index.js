@@ -66,6 +66,7 @@ async function run() {
       res.send(users);
     });
 
+    //User Put Api
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -102,16 +103,19 @@ async function run() {
       res.send(result);
     });
 
-    // Part API
+    // Part Get API
     app.get("/part", async (req, res) => {
       const query = {};
-      // const cursor = partCollection.find(query).sort({ _id: -1 }).limit(6);
-      const parts = await partCollection
-        .find(query)
-        .toArray()
-        .sort({ _id: -1 })
-        .limit(6);
+      const cursor = partCollection.find(query).sort({ _id: -1 }).limit(6);
+      const parts = await cursor.toArray();
       res.send(parts);
+    });
+
+    // Part Post API
+    app.post("/part", async (req, res) => {
+      const part = req.body;
+      const result = await partCollection.insertOne(part);
+      res.send(result);
     });
 
     // Part Details API
