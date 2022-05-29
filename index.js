@@ -165,10 +165,26 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/purchase/:email", verifyJWT, async (req, res) => {
+      const purchase = req.body;
+      const result = await purchaseCollection.find(purchase);
+      res.send(result);
+    });
+
     // Purchase API
     app.post("/purchase", verifyJWT, async (req, res) => {
       const purchase = req.body;
       const result = await purchaseCollection.insertOne(purchase);
+      res.send(result);
+    });
+
+    // Reviews Get API
+    app.get("/reviews", async (req, res) => {
+      const query = {};
+      const result = await reviewCollection
+        .find(query)
+        .sort({ _id: -1 })
+        .toArray();
       res.send(result);
     });
 
