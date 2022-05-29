@@ -106,6 +106,13 @@ async function run() {
       res.send(result);
     });
 
+    //Profile Get Api
+    app.get("/profiles/:email", async (req, res) => {
+      const email = req.params.email;
+      const userProfile = await userCollection.findOne({ email: email });
+      res.send(userProfile);
+    });
+
     //Profile Put Api
     app.put("/profiles/:email", async (req, res) => {
       const email = req.params.email;
