@@ -46,6 +46,9 @@ async function run() {
     const purchaseCollection = client
       .db("bicycle-manufacturer")
       .collection("purchases");
+    const reviewCollection = client
+      .db("bicycle-manufacturer")
+      .collection("reviews");
 
     //VerifyAdmin Bearer Api
     const verifyAdmin = async (req, res, next) => {
@@ -103,6 +106,20 @@ async function run() {
       res.send(result);
     });
 
+    //Profile Put Api
+    app.put("/profiles/:email", async (req, res) => {
+      const email = req.params.email;
+      const profile = req.body;
+      console.log(profile);
+      const filter = { email: email };
+      const updatedDoc = {
+        $set: profile,
+      };
+      const updatedProfile = await userCollection.updateOne(filter, updatedDoc);
+      console.log(updatedProfile);
+      res.send(updatedProfile);
+    });
+
     // Part Get API
     app.get("/part", async (req, res) => {
       const query = {};
@@ -145,6 +162,13 @@ async function run() {
     app.post("/purchase", verifyJWT, async (req, res) => {
       const purchase = req.body;
       const result = await purchaseCollection.insertOne(purchase);
+      res.send(result);
+    });
+
+    // Reviews POST API
+    app.post("/reviews", async (req, res) => {
+      const review = req.body;
+      const result = await reviewCollection.insertOne(review);
       res.send(result);
     });
   } finally {
