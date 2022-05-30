@@ -3,6 +3,7 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -49,6 +50,12 @@ async function run() {
     const reviewCollection = client
       .db("bicycle-manufacturer")
       .collection("reviews");
+    const paymentCollection = client
+      .db("bicycle-manufacturer")
+      .collection("payments");
+    const shippedCollection = client
+      .db("bicycle-manufacturer")
+      .collection("shipped");
 
     //VerifyAdmin Bearer Api
     const verifyAdmin = async (req, res, next) => {
@@ -126,6 +133,18 @@ async function run() {
       console.log(updatedProfile);
       res.send(updatedProfile);
     });
+    //
+    app.post("/create-payment-intent", async (req, res) => {
+      const part = req.body;
+      const price = part.price;
+      const amount = price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({ clientSecret: paymentIntent.client_secret });
+    });
 
     // Part Get API
     app.get("/part", async (req, res) => {
@@ -165,19 +184,98 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/purchase/:email", verifyJWT, async (req, res) => {
+    /*  app.get("/purchase/:email", verifyJWT, async (req, res) => {
       const purchase = req.body;
       const result = await purchaseCollection.find(purchase);
       res.send(result);
+    }); */
+
+    app.get("/myPurchase", async (req, res) => {
+      const email = req.query.email;
+      const query = { email };
+      const myPurchases = await purchaseCollection.find(query).toArray();
+      return res.send(myPurchases);
+      /*   const decodedEmail = req.decoded.email;
+      if (email === decodedEmail) {
+        const query = { email: email };
+        const myPurchases = await purchaseCollection.find(query).toArray();
+        return res.send(myPurchases);
+      } else {
+        return res.status(403).send({ message: "Forbidden Access" });
+      } */
+    });
+    app.get("/purchase/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const purchase = await purchaseCollection.findOne(query);
+      res.send(purchase);
     });
 
-    // Purchase API
-    app.post("/purchase", verifyJWT, async (req, res) => {
+    //Purchase Get API
+    app.get("/purchase", async (req, res) => {
+      const query = {};
+      const purchases = await purchaseCollection.find(query).toArray();
+      res.send(purchases);
+    });
+
+    // Purchase Post API
+    app.post("/purchase", async (req, res) => {
       const purchase = req.body;
       const result = await purchaseCollection.insertOne(purchase);
       res.send(result);
     });
 
+    // Purchase Patch API
+    app.patch("/purchase/:id", async (req, res) => {
+      const id = req.params.id;
+      const purchasePayment = req.body;
+      const filter = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: { paid: true, transactionId: purchasePayment.transactionId },
+      };
+      const result = await paymentCollection.insertOne(purchasePayment);
+      const updatedPurchase = await purchaseCollection.updateOne(
+        filter,
+        updatedDoc
+      );
+      res.send(updatedDoc);
+    });
+
+    /*  app.get("/shipped", async (req, res) => {
+      const result = await shippedCollection.find({}).toArray();
+      res.send(result);
+    }); */
+
+    app.patch("/shipped/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          shipping: true,
+        },
+      };
+      const updatedPurchase = await purchaseCollection.updateOne(
+        filter,
+        updatedDoc
+      );
+      res.send(updatedPurchase);
+    });
+
+    //My Purchase Delete API
+    app.delete("/myPurchase/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await purchaseCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    //Purchase Delete API
+    app.delete("/purchase/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await purchaseCollection.deleteOne(filter);
+      res.send(result);
+    });
     // Reviews Get API
     app.get("/reviews", async (req, res) => {
       const query = {};
